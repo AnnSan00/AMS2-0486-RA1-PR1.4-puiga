@@ -52,8 +52,17 @@ public class PR14GestioLlibreriaJacksonMain {
      * @return Llista de llibres o null si hi ha hagut un error en la lectura.
      */
     public List<Llibre> carregarLlibres() {
-        // *************** CODI PRÀCTICA **********************/
-        return null; // Substitueix pel teu
+        try {
+            if (!dataFile.exists()) {
+                System.err.println("Error: El fitxer no existeix a la ruta " + dataFile.getAbsolutePath());
+                return null;
+            }
+            JsonMapper mapper = JsonMapper.builder().build();
+            return mapper.readValue(dataFile, new TypeReference<List<Llibre>>() {});
+        } catch (JacksonException e) {
+            System.err.println("Error de lectura o JSON invàlid: " + e.getMessage());
+            return null;
+        }
     }
 
     /**
@@ -64,7 +73,12 @@ public class PR14GestioLlibreriaJacksonMain {
      * @param nouAny Nou any de publicació.
      */
     public void modificarAnyPublicacio(List<Llibre> llibres, int id, int nouAny) {
-        // *************** CODI PRÀCTICA **********************/
+        for (Llibre llibre : llibres) {
+            if (llibre.getId() == id) {
+                llibre.setAny(nouAny);
+                break;
+            }
+        }
     }
 
     /**
@@ -74,7 +88,7 @@ public class PR14GestioLlibreriaJacksonMain {
      * @param nouLlibre Nou llibre a afegir.
      */
     public void afegirNouLlibre(List<Llibre> llibres, Llibre nouLlibre) {
-        // *************** CODI PRÀCTICA **********************/
+        llibres.add(nouLlibre);
     }
 
     /**
@@ -84,7 +98,7 @@ public class PR14GestioLlibreriaJacksonMain {
      * @param id Identificador del llibre a esborrar.
      */
     public void esborrarLlibre(List<Llibre> llibres, int id) {
-        // *************** CODI PRÀCTICA **********************/
+        llibres.removeIf(llibre -> llibre.getId() == id);
     }
 
     /**
@@ -94,6 +108,12 @@ public class PR14GestioLlibreriaJacksonMain {
      * @param llibres Llista de llibres a guardar.
      */
     public void guardarLlibres(List<Llibre> llibres) {
-        // *************** CODI PRÀCTICA **********************/
+        try {
+            File outputFile = new File(dataFile.getParentFile(), "llibres_output_jackson.json");
+            JsonMapper mapper = JsonMapper.builder().build();
+            mapper.writeValue(outputFile, llibres);
+        } catch (JacksonException e) {
+            System.err.println("Error al guardar el fitxer JSON: " + e.getMessage());
+        }
     }
 }

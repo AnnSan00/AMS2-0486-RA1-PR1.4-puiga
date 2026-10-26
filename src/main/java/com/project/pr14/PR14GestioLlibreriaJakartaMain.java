@@ -1,16 +1,21 @@
 package com.project.pr14;
 
-import com.project.objectes.Llibre;
-import jakarta.json.*;
-import jakarta.json.stream.JsonGenerator;
-
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+
+import com.project.objectes.Llibre;
+
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.json.JsonReader;
+import jakarta.json.JsonValue;
 
 /**
  * Classe principal que gestiona la lectura i el processament de fitxers JSON per obtenir dades de llibres
@@ -56,8 +61,26 @@ public class PR14GestioLlibreriaJakartaMain {
      * @return Llista de llibres o null si hi ha hagut un error en la lectura.
      */
     public List<Llibre> carregarLlibres() {
-        // *************** CODI PRÀCTICA **********************/
-        return null; // Substitueix pel teu
+        if (!dataFile.exists()) {
+            System.err.println("Error: El fitxer no existeix a la ruta " + dataFile.getAbsolutePath());
+            return null;
+        }
+        try (JsonReader reader = Json.createReader(new FileReader(dataFile))) {
+            JsonArray jsonArray = reader.readArray();
+            List<Llibre> llibres = new ArrayList<>();
+            for (JsonValue val : jsonArray) {
+                JsonObject obj = val.asJsonObject();
+                int id = obj.getInt("id");
+                String titol = obj.getString("titol");
+                String autor = obj.getString("autor");
+                int any = obj.getInt("any");
+                llibres.add(new Llibre(id, titol, autor, any));
+            }
+            return llibres;
+        } catch (Exception e) {
+            System.err.println("Error de lectura o JSON invàlid: " + e.getMessage());
+            return null;
+        }
     }
 
     /**
@@ -68,7 +91,12 @@ public class PR14GestioLlibreriaJakartaMain {
      * @param nouAny Nou any de publicació.
      */
     public void modificarAnyPublicacio(List<Llibre> llibres, int id, int nouAny) {
-        // *************** CODI PRÀCTICA **********************/
+        for (Llibre llibre : llibres) {
+            if (llibre.getId() == id) {
+                llibre.setAny(nouAny);
+                break;
+            }
+        }
     }
 
     /**
@@ -78,7 +106,7 @@ public class PR14GestioLlibreriaJakartaMain {
      * @param nouLlibre Nou llibre a afegir.
      */
     public void afegirNouLlibre(List<Llibre> llibres, Llibre nouLlibre) {
-        // *************** CODI PRÀCTICA **********************/
+        llibres.add(nouLlibre);
     }
 
     /**
@@ -88,7 +116,7 @@ public class PR14GestioLlibreriaJakartaMain {
      * @param id Identificador del llibre a esborrar.
      */
     public void esborrarLlibre(List<Llibre> llibres, int id) {
-        // *************** CODI PRÀCTICA **********************/
+        llibres.removeIf(llibre -> llibre.getId() == id);
     }
 
     /**
@@ -98,6 +126,22 @@ public class PR14GestioLlibreriaJakartaMain {
      * @param llibres Llista de llibres a guardar.
      */
     public void guardarLlibres(List<Llibre> llibres) {
-        // *************** CODI PRÀCTICA **********************/
+        File outputFile = new File(dataFile.getParentFile(), "llibres_output_jakarta.json");
+        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+        for (Llibre llibre : llibres) {
+            JsonObjectBuilder objBuilder = Json.createObjectBuilder()
+                    .add("id", llibre.getId())
+                    .add("titol", llibre.getTitol())
+                    .add("autor", llibre.getAutor())
+                    .add("any", llibre.getAny());
+            arrayBuilder.add(objBuilder);
+        }
+        JsonArray jsonArray = arrayBuilder.build();
+
+        try (FileWriter writer = new FileWriter(outputFile)) {
+            Json.createWriter(writer).write(jsonArray);
+        } catch (IOException e) {
+            System.err.println("Error al guardar el fitxer JSON: " + e.getMessage());
+        }
     }
 }
